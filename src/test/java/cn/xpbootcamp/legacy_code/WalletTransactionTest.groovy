@@ -77,7 +77,7 @@ class WalletTransactionTest extends Specification {
     def "should return false when execute given transaction id is lock"() {
         given:
         lockService.lock(id) >> false
-        walletService.moveMoney(id, buyerId, sellerId, amount) >> 'abc'
+        walletService.moveMoney(transaction) >> 'abc'
         when:
         def result = transaction.execute()
         then:
@@ -87,7 +87,7 @@ class WalletTransactionTest extends Specification {
     def "should return false and status to EXPIRED when execute given transaction more than 20 days"() {
         given:
         transaction.createdTimestamp = ZonedDateTime.now(ZoneId.systemDefault()).minusDays(20).minusMinutes(1).toEpochSecond() * 1000
-        walletService.moveMoney(id, buyerId, sellerId, amount) >> 'abc'
+        walletService.moveMoney(transaction) >> 'abc'
         lockService.lock(id) >> true
         when:
         def result = transaction.execute()
@@ -99,7 +99,7 @@ class WalletTransactionTest extends Specification {
 
     def "should return false and status to FAILED when execute given walletService return null"() {
         given:
-        walletService.moveMoney(id, buyerId, sellerId, amount) >> null
+        walletService.moveMoney(transaction) >> null
         lockService.lock(id) >> true
         when:
         def result = transaction.execute()
@@ -110,7 +110,19 @@ class WalletTransactionTest extends Specification {
 
     def "should return true and status to EXECUTED when execute given walletService return abc"() {
         given:
-        walletService.moveMoney(id, buyerId, sellerId, amount) >> 'abc'
+        walletService.moveMoney(transaction) >> 'abc'
+        lockService.lock(id) >> true
+        when:
+        def result = transaction.execute()
+        then:
+        result
+        transaction.status == STATUS.EXECUTED
+    }
+
+    def "should return true and status to EXECUTED when execute given walletService return abc and time is in 20days"() {
+        given:
+        walletService.moveMoney(transaction) >> 'abc'
+        transaction.createdTimestamp = ZonedDateTime.now(ZoneId.systemDefault()).minusDays(20).plusMinutes(1).toEpochSecond() * 1000
         lockService.lock(id) >> true
         when:
         def result = transaction.execute()

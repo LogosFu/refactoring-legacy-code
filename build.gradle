@@ -25,6 +25,7 @@ def JUNIT5_PLATFORM_VERSION = '1.3.0'
 
 dependencies {
     compile 'com.google.guava:guava:28.2-jre'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
     annotationProcessor 'org.projectlombok:lombok:1.18.2'
     compileOnly 'org.projectlombok:lombok:1.18.2'
     compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '3.0.0', ext: 'pom'
