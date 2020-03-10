@@ -1,13 +1,20 @@
 package cn.xpbootcamp.legacy_code;
 
 import cn.xpbootcamp.legacy_code.enums.STATUS;
+import cn.xpbootcamp.legacy_code.service.LockService;
+import cn.xpbootcamp.legacy_code.service.LockServiceImpl;
 import cn.xpbootcamp.legacy_code.service.WalletService;
 import cn.xpbootcamp.legacy_code.service.WalletServiceImpl;
 import cn.xpbootcamp.legacy_code.utils.IdGenerator;
-import cn.xpbootcamp.legacy_code.utils.RedisDistributedLock;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
 import javax.transaction.InvalidTransactionException;
 
+@Data
+@Builder
+@AllArgsConstructor
 public class WalletTransaction {
     private String id;
     private Long buyerId;
@@ -18,6 +25,8 @@ public class WalletTransaction {
     private Double amount;
     private STATUS status;
     private String walletTransactionId;
+    private LockService lockService;
+    private WalletService walletService ;
 
 
     public WalletTransaction(String preAssignedId, Long buyerId, Long sellerId, Long productId, String orderId) {
@@ -35,6 +44,8 @@ public class WalletTransaction {
         this.orderId = orderId;
         this.status = STATUS.TO_BE_EXECUTED;
         this.createdTimestamp = System.currentTimeMillis();
+        this.lockService = new LockServiceImpl();
+        this.walletService = new WalletServiceImpl();
     }
 
     public boolean execute() throws InvalidTransactionException {
@@ -44,7 +55,7 @@ public class WalletTransaction {
         if (status == STATUS.EXECUTED) return true;
         boolean isLocked = false;
         try {
-            isLocked = RedisDistributedLock.getSingletonInstance().lock(id);
+            isLocked = lockService.lock(id);
 
             // 锁定未成功，返回false
             if (!isLocked) {
@@ -57,7 +68,6 @@ public class WalletTransaction {
                 this.status = STATUS.EXPIRED;
                 return false;
             }
-            WalletService walletService = new WalletServiceImpl();
             String walletTransactionId = walletService.moveMoney(id, buyerId, sellerId, amount);
             if (walletTransactionId != null) {
                 this.walletTransactionId = walletTransactionId;
@@ -69,9 +79,8 @@ public class WalletTransaction {
             }
         } finally {
             if (isLocked) {
-                RedisDistributedLock.getSingletonInstance().unlock(id);
+                lockService.unlock(id);
             }
         }
     }
-
 }
