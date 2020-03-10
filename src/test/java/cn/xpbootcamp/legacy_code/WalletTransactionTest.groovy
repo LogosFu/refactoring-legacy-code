@@ -21,9 +21,10 @@ class WalletTransactionTest extends Specification {
     def walletService = Mock(WalletService)
 
     void setup() {
-
         transaction = WalletTransaction.builder().sellerId(sellerId).buyerId(buyerId).id(id)
                 .amount(amount).orderId(orderId).status(STATUS.TO_BE_EXECUTED)
+                .lockService(lockService)
+                 .walletService(walletService)
                 .createdTimestamp(ZonedDateTime.now(ZoneId.systemDefault()).toEpochSecond() * 1000).build()
     }
 
@@ -76,9 +77,7 @@ class WalletTransactionTest extends Specification {
     def "should return false when execute given transaction id is lock"() {
         given:
         lockService.lock(id) >> false
-        transaction.lockService = lockService
         walletService.moveMoney(id, buyerId, sellerId, amount) >> 'abc'
-        transaction.walletService = walletService
         when:
         def result = transaction.execute()
         then:
@@ -89,10 +88,7 @@ class WalletTransactionTest extends Specification {
         given:
         transaction.createdTimestamp = ZonedDateTime.now(ZoneId.systemDefault()).minusDays(20).minusMinutes(1).toEpochSecond() * 1000
         walletService.moveMoney(id, buyerId, sellerId, amount) >> 'abc'
-        transaction.walletService = walletService
         lockService.lock(id) >> true
-        transaction.lockService = lockService
-
         when:
         def result = transaction.execute()
         then:
@@ -104,9 +100,7 @@ class WalletTransactionTest extends Specification {
     def "should return false and status to FAILED when execute given walletService return null"() {
         given:
         walletService.moveMoney(id, buyerId, sellerId, amount) >> null
-        transaction.walletService = walletService
         lockService.lock(id) >> true
-        transaction.lockService = lockService
         when:
         def result = transaction.execute()
         then:
@@ -117,9 +111,7 @@ class WalletTransactionTest extends Specification {
     def "should return true and status to EXECUTED when execute given walletService return abc"() {
         given:
         walletService.moveMoney(id, buyerId, sellerId, amount) >> 'abc'
-        transaction.walletService = walletService
         lockService.lock(id) >> true
-        transaction.lockService = lockService
         when:
         def result = transaction.execute()
         then:
