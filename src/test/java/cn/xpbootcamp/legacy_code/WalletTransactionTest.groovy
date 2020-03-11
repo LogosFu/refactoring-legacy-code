@@ -1,5 +1,6 @@
 package cn.xpbootcamp.legacy_code
 
+import cn.xpbootcamp.legacy_code.domain.TransactionEntity
 import cn.xpbootcamp.legacy_code.enums.STATUS
 import cn.xpbootcamp.legacy_code.service.LockService
 import cn.xpbootcamp.legacy_code.service.WalletService

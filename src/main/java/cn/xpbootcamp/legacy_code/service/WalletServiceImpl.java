@@ -1,6 +1,6 @@
 package cn.xpbootcamp.legacy_code.service;
 
-import cn.xpbootcamp.legacy_code.TransactionEntity;
+import cn.xpbootcamp.legacy_code.domain.TransactionEntity;
 import cn.xpbootcamp.legacy_code.entity.User;
 import cn.xpbootcamp.legacy_code.repository.UserRepository;
 import cn.xpbootcamp.legacy_code.repository.UserRepositoryImpl;
