@@ -1,6 +1,7 @@
 package cn.xpbootcamp.legacy_code;
 
 import cn.xpbootcamp.legacy_code.domain.TransactionEntity;
+import cn.xpbootcamp.legacy_code.enums.CheckResult;
 import cn.xpbootcamp.legacy_code.service.LockService;
 import cn.xpbootcamp.legacy_code.service.LockServiceImpl;
 import cn.xpbootcamp.legacy_code.service.WalletService;
@@ -34,13 +35,7 @@ public class WalletTransaction {
         }
         isLocked = false;
         try {
-            isLocked = lockService.lock(transactionEntity.getId());
-            if (preCheck() != null) {
-                return preCheck();
-            }
-            walletTransactionId = walletService.moveMoney(transactionEntity);
-            transactionEntity.checkMoveMoneyResult(walletTransactionId);
-            return transactionEntity.isSuccess();
+            return toMoveMoney();
         } finally {
             if (isLocked) {
                 lockService.unlock(transactionEntity.getId());
@@ -48,17 +43,25 @@ public class WalletTransaction {
         }
     }
 
-    protected Boolean preCheck() {
-        if (!isLocked) {
-            return false;
+    protected boolean toMoveMoney() {
+        isLocked = lockService.lock(transactionEntity.getId());
+        if (preCheck() != CheckResult.NO_RESULT) {
+            return preCheck().isSuccess();
         }
-        if (transactionEntity.isExpired()) {
-            return false;
+        walletTransactionId = walletService.moveMoney(transactionEntity);
+        transactionEntity.checkMoveMoneyResult(walletTransactionId);
+        return transactionEntity.isSuccess();
+    }
+
+    protected CheckResult preCheck() {
+        if (!isLocked || transactionEntity.isExpired()) {
+            return CheckResult.FAILED;
         }
+
         if (transactionEntity.isSuccess()) {
-            return true;
+            return CheckResult.SUCCESS;
         }
-        return null;
+        return CheckResult.NO_RESULT;
     }
 
 }
