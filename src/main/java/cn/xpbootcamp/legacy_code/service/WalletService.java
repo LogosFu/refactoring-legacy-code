@@ -1,7 +1,7 @@
 package cn.xpbootcamp.legacy_code.service;
 
-import cn.xpbootcamp.legacy_code.WalletTransaction;
+import cn.xpbootcamp.legacy_code.TransactionEntity;
 
 public interface WalletService {
-    String moveMoney(WalletTransaction transaction);
+    String moveMoney(TransactionEntity transactionEntity);
 }

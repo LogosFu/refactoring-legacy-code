@@ -19,13 +19,17 @@ class WalletTransactionTest extends Specification {
     WalletTransaction transaction
     def lockService = Mock(LockService)
     def walletService = Mock(WalletService)
+    TransactionEntity transactionEntity
 
     void setup() {
-        transaction = WalletTransaction.builder().sellerId(sellerId).buyerId(buyerId).id(id)
+        transactionEntity = TransactionEntity.builder().sellerId(sellerId).buyerId(buyerId).id(id)
                 .amount(amount).orderId(orderId).status(STATUS.TO_BE_EXECUTED)
+                .createdTimestamp(ZonedDateTime.now(ZoneId.systemDefault()).toEpochSecond() * 1000).build();
+        transaction = WalletTransaction.builder()
+                .transactionEntity(transactionEntity)
                 .lockService(lockService)
-                 .walletService(walletService)
-                .createdTimestamp(ZonedDateTime.now(ZoneId.systemDefault()).toEpochSecond() * 1000).build()
+                .walletService(walletService)
+                .build()
     }
 
     def "should return WalletTransaction with id and states is TO_BE_EXECUTED when new walletTransaction"() {
@@ -34,13 +38,13 @@ class WalletTransactionTest extends Specification {
         when:
         def transaction = new WalletTransaction(preId, buyerId, sellerId, productID, orderId);
         then:
-        transaction.status == STATUS.TO_BE_EXECUTED
-        transaction.id.startsWith("t_")
+        transactionEntity.status == STATUS.TO_BE_EXECUTED
+        transactionEntity.id.startsWith("t_")
     }
 
     def "should throw InvalidTransactionException when execute given WalletTransaction buyerId is null"() {
         given:
-        transaction.buyerId = null
+        transactionEntity.buyerId = null
         when:
         transaction.execute();
         then:
@@ -49,7 +53,7 @@ class WalletTransactionTest extends Specification {
 
     def "should throw InvalidTransactionException when execute given WalletTransaction sell Id is null"() {
         given:
-        transaction.buyerId = null
+        transactionEntity.buyerId = null
         when:
         transaction.execute()
         then:
@@ -58,7 +62,7 @@ class WalletTransactionTest extends Specification {
 
     def "should throw InvalidTransactionException when execute given transaction amount low than 0"() {
         given:
-        transaction.amount = -1
+        transactionEntity.amount = -1
         when:
         transaction.execute()
         then:
@@ -67,7 +71,7 @@ class WalletTransactionTest extends Specification {
 
     def "should return true when execute given transaction status is EXECUTED"() {
         given:
-        transaction.status = STATUS.EXECUTED
+        transactionEntity.status = STATUS.EXECUTED
         when:
         def result = transaction.execute()
         then:
@@ -77,7 +81,7 @@ class WalletTransactionTest extends Specification {
     def "should return false when execute given transaction id is lock"() {
         given:
         lockService.lock(id) >> false
-        walletService.moveMoney(transaction) >> 'abc'
+        walletService.moveMoney(transactionEntity) >> 'abc'
         when:
         def result = transaction.execute()
         then:
@@ -86,48 +90,48 @@ class WalletTransactionTest extends Specification {
 
     def "should return false and status to EXPIRED when execute given transaction more than 20 days"() {
         given:
-        transaction.createdTimestamp = ZonedDateTime.now(ZoneId.systemDefault()).minusDays(20).minusMinutes(1).toEpochSecond() * 1000
-        walletService.moveMoney(transaction) >> 'abc'
+        transactionEntity.createdTimestamp = ZonedDateTime.now(ZoneId.systemDefault()).minusDays(20).minusMinutes(1).toEpochSecond() * 1000
+        walletService.moveMoney(transactionEntity) >> 'abc'
         lockService.lock(id) >> true
         when:
         def result = transaction.execute()
         then:
         !result
-        transaction.status == STATUS.EXPIRED
+        transactionEntity.status == STATUS.EXPIRED
         1*lockService.unlock(id)
     }
 
     def "should return false and status to FAILED when execute given walletService return null"() {
         given:
-        walletService.moveMoney(transaction) >> null
+        walletService.moveMoney(transactionEntity) >> null
         lockService.lock(id) >> true
         when:
         def result = transaction.execute()
         then:
         !result
-        transaction.status == STATUS.FAILED
+        transactionEntity.status == STATUS.FAILED
     }
 
     def "should return true and status to EXECUTED when execute given walletService return abc"() {
         given:
-        walletService.moveMoney(transaction) >> 'abc'
+        walletService.moveMoney(transactionEntity) >> 'abc'
         lockService.lock(id) >> true
         when:
         def result = transaction.execute()
         then:
         result
-        transaction.status == STATUS.EXECUTED
+        transactionEntity.status == STATUS.EXECUTED
     }
 
     def "should return true and status to EXECUTED when execute given walletService return abc and time is in 20days"() {
         given:
-        walletService.moveMoney(transaction) >> 'abc'
-        transaction.createdTimestamp = ZonedDateTime.now(ZoneId.systemDefault()).minusDays(20).plusMinutes(1).toEpochSecond() * 1000
+        walletService.moveMoney(transactionEntity) >> 'abc'
+        transactionEntity.createdTimestamp = ZonedDateTime.now(ZoneId.systemDefault()).minusDays(20).plusMinutes(1).toEpochSecond() * 1000
         lockService.lock(id) >> true
         when:
         def result = transaction.execute()
         then:
         result
-        transaction.status == STATUS.EXECUTED
+        transactionEntity.status == STATUS.EXECUTED
     }
 }
