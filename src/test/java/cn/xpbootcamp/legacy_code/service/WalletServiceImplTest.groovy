@@ -4,6 +4,7 @@ import cn.xpbootcamp.legacy_code.WalletTransactionApplication
 import cn.xpbootcamp.legacy_code.entity.User
 import cn.xpbootcamp.legacy_code.enums.TransactionStatus
 import cn.xpbootcamp.legacy_code.repository.UserRepository
+import cn.xpbootcamp.legacy_code.service.impl.WalletServiceImpl
 import org.apache.commons.lang3.StringUtils
 import spock.lang.Specification
 

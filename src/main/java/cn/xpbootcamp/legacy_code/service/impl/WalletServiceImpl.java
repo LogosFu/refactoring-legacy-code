@@ -1,9 +1,10 @@
-package cn.xpbootcamp.legacy_code.service;
+package cn.xpbootcamp.legacy_code.service.impl;
 
 import cn.xpbootcamp.legacy_code.domain.Transaction;
 import cn.xpbootcamp.legacy_code.entity.User;
 import cn.xpbootcamp.legacy_code.repository.UserRepository;
 import cn.xpbootcamp.legacy_code.repository.UserRepositoryImpl;
+import cn.xpbootcamp.legacy_code.service.WalletService;
 import lombok.Data;
 
 import java.util.UUID;
