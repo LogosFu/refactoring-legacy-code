@@ -1,8 +1,8 @@
 package cn.xpbootcamp.legacy_code.service
 
-import cn.xpbootcamp.legacy_code.WalletTransaction
+import cn.xpbootcamp.legacy_code.WalletTransactionApplication
 import cn.xpbootcamp.legacy_code.entity.User
-import cn.xpbootcamp.legacy_code.enums.STATUS
+import cn.xpbootcamp.legacy_code.enums.TransactionStatus
 import cn.xpbootcamp.legacy_code.repository.UserRepository
 import org.apache.commons.lang3.StringUtils
 import spock.lang.Specification
@@ -17,14 +17,14 @@ class WalletServiceImplTest extends Specification {
     def productID = 3L
     def orderId = "2345"
     def amount = 100d
-    WalletTransaction transaction
+    WalletTransactionApplication transaction
     WalletService walletService
 
     void setup() {
         walletService = new WalletServiceImpl()
         walletService.setUserRepository(userRepository)
-        transaction = WalletTransaction.builder().sellerId(sellerId).buyerId(buyerId).id(id)
-                .amount(amount).orderId(orderId).status(STATUS.TO_BE_EXECUTED)
+        transaction = WalletTransactionApplication.builder().sellerId(sellerId).buyerId(buyerId).id(id)
+                .amount(amount).orderId(orderId).status(TransactionStatus.TO_BE_EXECUTED)
                 .createdTimestamp(ZonedDateTime.now(ZoneId.systemDefault()).toEpochSecond() * 1000).build()
     }
     def userRepository = Mock(UserRepository);

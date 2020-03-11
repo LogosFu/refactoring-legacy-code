@@ -1,6 +1,6 @@
 package cn.xpbootcamp.legacy_code.domain;
 
-import cn.xpbootcamp.legacy_code.enums.STATUS;
+import cn.xpbootcamp.legacy_code.enums.TransactionStatus;
 import cn.xpbootcamp.legacy_code.utils.IdGenerator;
 import javax.transaction.InvalidTransactionException;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @NoArgsConstructor
-public class TransactionEntity {
+public class Transaction {
     String id;
     Long buyerId;
     Long sellerId;
@@ -20,9 +20,9 @@ public class TransactionEntity {
     String orderId;
     Long createdTimestamp;
     Double amount;
-    STATUS status;
+    TransactionStatus transactionStatus;
 
-    public TransactionEntity(String preAssignedId, Long buyerId, Long sellerId, Long productId, String orderId) {
+    public Transaction(String preAssignedId, Long buyerId, Long sellerId, Long productId, String orderId) {
         this.id = getPreId(preAssignedId);
         this.buyerId = buyerId;
         this.sellerId = sellerId;
@@ -47,14 +47,14 @@ public class TransactionEntity {
     }
 
     private void initTransaction() {
-        status = STATUS.TO_BE_EXECUTED;
+        transactionStatus = TransactionStatus.TO_BE_EXECUTED;
         createdTimestamp = System.currentTimeMillis();
     }
 
     public boolean isExpired() {
         boolean isExpired = System.currentTimeMillis() - getCreatedTimestamp() > 1728000000;
         if (isExpired) {
-            status = STATUS.EXPIRED;
+            transactionStatus = TransactionStatus.EXPIRED;
         }
         return isExpired;
     }
@@ -68,14 +68,14 @@ public class TransactionEntity {
     }
 
     public boolean isSuccess() {
-        return getStatus() == STATUS.EXECUTED;
+        return getTransactionStatus() == TransactionStatus.EXECUTED;
     }
 
     public void checkMoveMoneyResult(String walletTransactionId) {
         if (walletTransactionId != null) {
-            setStatus(STATUS.EXECUTED);
+            setTransactionStatus(TransactionStatus.EXECUTED);
         } else {
-            setStatus(STATUS.FAILED);
+            setTransactionStatus(TransactionStatus.FAILED);
         }
     }
 

@@ -1,7 +1,7 @@
 package cn.xpbootcamp.legacy_code
 
-import cn.xpbootcamp.legacy_code.domain.TransactionEntity
-import cn.xpbootcamp.legacy_code.enums.STATUS
+import cn.xpbootcamp.legacy_code.domain.Transaction
+import cn.xpbootcamp.legacy_code.enums.TransactionStatus
 import cn.xpbootcamp.legacy_code.service.LockService
 import cn.xpbootcamp.legacy_code.service.WalletService
 import spock.lang.Specification
@@ -10,24 +10,24 @@ import javax.transaction.InvalidTransactionException
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-class WalletTransactionTest extends Specification {
+class WalletTransactionApplicationTest extends Specification {
     def id = 't_12345667'
     def buyerId = 1L
     def sellerId = 2L
     def productID = 3L
     def orderId = "2345"
     def amount = 100d
-    WalletTransaction transaction
+    WalletTransactionApplication transaction
     def lockService = Mock(LockService)
     def walletService = Mock(WalletService)
-    TransactionEntity transactionEntity
+    Transaction transactionEntity
 
     void setup() {
-        transactionEntity = TransactionEntity.builder().sellerId(sellerId).buyerId(buyerId).id(id)
-                .amount(amount).orderId(orderId).status(STATUS.TO_BE_EXECUTED)
+        transactionEntity = Transaction.builder().sellerId(sellerId).buyerId(buyerId).id(id)
+                .amount(amount).orderId(orderId).transactionStatus(TransactionStatus.TO_BE_EXECUTED)
                 .createdTimestamp(ZonedDateTime.now(ZoneId.systemDefault()).toEpochSecond() * 1000).build();
-        transaction = WalletTransaction.builder()
-                .transactionEntity(transactionEntity)
+        transaction = WalletTransactionApplication.builder()
+                .transaction(transactionEntity)
                 .lockService(lockService)
                 .walletService(walletService)
                 .build()
@@ -37,9 +37,9 @@ class WalletTransactionTest extends Specification {
         given:
         def preId = ""
         when:
-        def transaction = new WalletTransaction(preId, buyerId, sellerId, productID, orderId);
+        def transaction = new WalletTransactionApplication(preId, buyerId, sellerId, productID, orderId);
         then:
-        transactionEntity.status == STATUS.TO_BE_EXECUTED
+        transactionEntity.getTransactionStatus() == TransactionStatus.TO_BE_EXECUTED
         transactionEntity.id.startsWith("t_")
     }
 
@@ -72,7 +72,7 @@ class WalletTransactionTest extends Specification {
 
     def "should return true when execute given transaction status is EXECUTED"() {
         given:
-        transactionEntity.status = STATUS.EXECUTED
+        transactionEntity.setTransactionStatus(TransactionStatus.EXECUTED)
         when:
         def result = transaction.execute()
         then:
@@ -98,7 +98,7 @@ class WalletTransactionTest extends Specification {
         def result = transaction.execute()
         then:
         !result
-        transactionEntity.status == STATUS.EXPIRED
+        transactionEntity.getTransactionStatus() == TransactionStatus.EXPIRED
         1*lockService.unlock(id)
     }
 
@@ -110,7 +110,7 @@ class WalletTransactionTest extends Specification {
         def result = transaction.execute()
         then:
         !result
-        transactionEntity.status == STATUS.FAILED
+        transactionEntity.getTransactionStatus()== TransactionStatus.FAILED
     }
 
     def "should return true and status to EXECUTED when execute given walletService return abc"() {
@@ -121,7 +121,7 @@ class WalletTransactionTest extends Specification {
         def result = transaction.execute()
         then:
         result
-        transactionEntity.status == STATUS.EXECUTED
+        transactionEntity.getTransactionStatus() == TransactionStatus.EXECUTED
     }
 
     def "should return true and status to EXECUTED when execute given walletService return abc and time is in 20days"() {
@@ -133,6 +133,6 @@ class WalletTransactionTest extends Specification {
         def result = transaction.execute()
         then:
         result
-        transactionEntity.status == STATUS.EXECUTED
+        transactionEntity.getTransactionStatus() == TransactionStatus.EXECUTED
     }
 }
